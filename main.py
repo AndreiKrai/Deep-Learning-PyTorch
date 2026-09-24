@@ -9,8 +9,11 @@ import torch.nn as nn
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+# Імпортуємо інструменти для обробки даних, побудови нейромережі та оцінювання.
+
 # 2. Підготовка даних:
 # Завантажте набір даних Concrete Strength Prediction з платформи Kaggle.
+# KaggleHub повертає локальний шлях до завантаженого набору даних.
 dataset_path = Path(
     kagglehub.dataset_download("mchilamwar/predict-concrete-strength")
 )
@@ -19,6 +22,7 @@ print("Path to dataset files:", dataset_path)
 
 csv_file = next(dataset_path.glob("*.csv"))
 df = pd.read_csv(csv_file)
+# Таблиця містить характеристики бетону та цільову міцність Strength.
 
 # print(df.sample(5, random_state=42))
 # df.info()
@@ -26,6 +30,7 @@ df = pd.read_csv(csv_file)
 # Розділіть дані на ознаки (X) та цільову змінну (y).
 X = df.drop(columns=["Strength"])
 y = df["Strength"]
+# X є входом моделі, а y - правильними значеннями, які модель має передбачити.
 
 # Розділіть дані на навчальний та тестовий набори.
 X_train, X_test, y_train, y_test = train_test_split(
@@ -34,10 +39,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.33,
     random_state=42,
 )
+# Тестова частина не використовується під час навчання, тому чесно показує якість моделі.
 # Нормалізуйте вхідні дані за допомогою StandardScaler.
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
+# Масштабування допомагає ознакам працювати в близьких діапазонах.
+# Параметри scaler обчислюємо лише на train, щоб не передати моделі інформацію з test.
 
 # 3. Створення моделі:
 #  Підготовка моделі
@@ -55,6 +63,7 @@ class LinearModel(nn.Module):
 
     def forward(self, x):
         return self.features(x)
+# Два приховані шари з ReLU вчаться знаходити нелінійні залежності між ознаками.
 
 
 model = LinearModel(in_dim=X_train.shape[1])
@@ -63,6 +72,7 @@ print(model)
 # 4. Налаштування навчання:
 # Виберіть функцію втрат (наприклад, MSELoss для регресії). Обґрунтуйте вибір функції втрат.
 criterion = nn.MSELoss()  # MSELoss підходить для задач регресії, оскільки вона вимірює середньоквадратичну помилку між передбаченими та фактичними значеннями.
+# Модель навчається зменшувати різницю між прогнозом і реальною міцністю.
 
 # Встановіть гіперпараметри — швидкість навчання (lr), розмір батчу, кількість епох.
 lr = 0.001
@@ -86,12 +96,14 @@ train_loader = DataLoader(
     batch_size=batch_size,
     shuffle=True,
 )
+# DataLoader подає дані невеликими перемішаними пакетами, що робить навчання стабільнішим.
 
 for epoch in range(num_epochs):
     model.train()
     epoch_loss = 0.0
 
     for batch_X, batch_y in train_loader:
+        # Один крок навчання: прогноз, обчислення помилки, градієнти та оновлення ваг.
         optimizer.zero_grad()
 
         outputs = model(batch_X)
@@ -111,6 +123,7 @@ for epoch in range(num_epochs):
         )
 
 # 6. Оцінка моделі:
+# Після навчання вимикаємо режим тренування та перевіряємо модель на невідомих даних.
 model.eval()
 with torch.no_grad():
     predictions = model(X_test_tensor)
