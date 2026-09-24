@@ -42,13 +42,15 @@ X_test = scaler.transform(X_test)
 # 3. Створення моделі:
 #  Підготовка моделі
 class LinearModel(nn.Module):
-    def __init__(self, in_dim, hidden_dim=20):
+    def __init__(self, in_dim, hidden_dim=20, second_hidden_dim=10):
         super().__init__()
 
         self.features = nn.Sequential(
             nn.Linear(in_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1),
+            nn.Linear(hidden_dim, second_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(second_hidden_dim, 1),
         )
 
     def forward(self, x):
